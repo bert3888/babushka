@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <link href="https://fonts.googleapis.com/css?family=Raleway:400,500,600|Roboto+Slab:400,500,600&display=swap" rel="stylesheet">
+    <style>
+        {
+            box-sizing: border-box;
+        }
+
+        img {
+            max-width: 100%;
+            height 60%;
+            object-fit: contain;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-gap: 1em;
+        }
+
+        article {
+            border: 1px solid white;
+            padding: 10px;
+            background: #ececec;
+        }
+
+        h1 {
+            justify-content: center;
+            display: flex;
+        }
+
+        .divide {
+            height: 5px;
+        }
+
+        .valgt {
+            background-color: darkgrey;
+        }
+
+        nav {
+            display: grid;
+            justify-content: center;
+            padding-bottom: 1em;
+        }
+
+        button {
+            justify-content: center;
+            font-size: 1em;
+            border-radius: 4px;
+            border: 1px solid black;
+            padding: 10px 32px;
+        }
+
+        p {
+            font-family: 'Raleway', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Roboto Slab', serif;
+        }
+
+        #detalje {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, .8);
+            overflow: scroll;
+            visibility: hidden;
+        }
+
+        #detalje .luk {
+            position: fixed;
+            top: 0;
+            left: 0;
+            font-size: 4rem;
+            cursor: pointer;
+            margin: 1em;
+        }
+
+        #detalje .menu_nr {
+            width: 60vw;
+            min-height: 50vh;
+            margin: auto;
+            padding: 4rem;
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1>Alle</h1>
+    <nav>
+        <button class="filter valgt" data-kategori="alle">Alle</button>
+        <div class="divide"></div>
+        <button class="filter" data-kategori="forretter">Forretter</button>
+        <div class="divide"></div>
+        <button class="filter" data-kategori="hovedretter">Hovedretter</button>
+        <div class="divide"></div>
+        <button class="filter" data-kategori="desserter">Desserter</button>
+        <div class="divide"></div>
+        <button class="filter" data-kategori="drikkevarer">Drikkevarer</button>
+    </nav>
+
+    <section class="container"></section>
+    <template>
+        <article class="menu_nr" data-ret>
+            <img src="" alt="">
+            <h2></h2>
+            <p class="p1"></p>
+            <p class="p2"></p>
+        </article>
+    </template>
+
+    <section id="detalje" class="skjul">
+        <button class="luk">X</button>
+        <article class="menu_nr">
+            <h2 class="navn">Navn</h2>
+            <img src="" alt="" class="profil-billede">
+            <p class="p1"></p>
+            <p class="p2"></p>
+        </article>
+    </section>
+
+    <script>
+        const endpoint = ("https://spreadsheets.google.com/feeds/list/17Dd7DvkPaFamNUdUKlrFgnH6POvBJXac7qyiS6zNRw0/od6/public/values?alt=json");
+        document.addEventListener("DOMContentLoaded", preStart);
+        let menuer = [];
+        let filter = "alle";
+        const container = document.querySelector(".container");
+        const detalje = document.querySelector("#detalje");
+
+        function preStart() {
+            hentData();
+        }
+
+        async function hentData() {
+            const response = await fetch(endpoint);
+            menuer = await response.json();
+            console.log(menuer);
+            addEventListenersToButtons();
+            start();
+        }
+
+        function start() {
+            antal = menuer.feed.entry.lenght;
+            container.innerHTML = "";
+            const menuTemplate = document.querySelector("template");
+            menuer.feed.entry.forEach((menu) => {
+                //console.log(menu);
+                if (filter == "alle" || filter == menu.gsx$kategori.$t) {
+                    let klon = menuTemplate.cloneNode(true).content;
+                    klon.querySelector("img").src = `imgs/small/${menu.gsx$billede.$t}-sm.jpg`;
+                    klon.querySelector("h2").textContent = menu.gsx$navn.$t;
+                    klon.querySelector(".p1").textContent = menu.gsx$kort.$t;
+                    klon.querySelector(".p2").textContent += `Pris: ${menu.gsx$pris.$t},-`;
+
+                    klon.querySelector(".menu_nr").setAttribute("data-ret", menu.gsx$id.$t);
+                    klon.querySelector(".menu_nr").addEventListener("click", visEnkelRet);
+
+
+                    container.appendChild(klon);
+
+                    /*menuer.feed.entry.forEach(menu => {
+                        if (filter == "alle" || filter == menu.gsx$kategori.$t) { // tjek hvilket køn personen har og sammenlign med filter eller vis alle
+                            detalje.querySelector(".profil-billede").src = `imgs/small/${menu.gsx$billede.$t}-sm.jpg`;
+                            detalje.querySelector(".navn").textContent = menu.gsx$navn.$t;
+                            detalje.querySelector(".p1").textContent = menu.gsx$kort.$t;
+                            detalje.querySelector(".p2").src += `Pris: ${menu.gsx$pris.$t},-`;
+                        }
+                    });*/
+                }
+            })
+        }
+
+        function visEnkelRet() {
+
+            //let madretId = this.dataset;
+            let madretId = this.getAttribute("data-ret");
+
+
+            let single = menuer.feed.entry.find(menu => {
+                if (madretId == menu.gsx$id.$t) { // tjek hvilket køn personen har og sammenlign med filter eller vis alle
+                    detalje.style.visibility = "visible";
+                    detalje.querySelector(".profil-billede").src = `imgs/small/${menu.gsx$billede.$t}-sm.jpg`;
+                    detalje.querySelector(".navn").textContent = menu.gsx$navn.$t;
+                    detalje.querySelector(".p1").textContent = menu.gsx$kort.$t;
+                    detalje.querySelector(".p2").src += `Pris: ${menu.gsx$pris.$t},-`;
+                    detalje.querySelector(".luk").addEventListener("click", skjul);
+                }
+            })
+        }
+
+
+
+
+
+        function skjul() {
+            document.querySelector("#detalje").style.visibility = "hidden";
+        }
+
+        function addEventListenersToButtons() {
+            document.querySelectorAll(".filter").forEach(elm => {
+                elm.addEventListener("click", filtrering);
+            })
+        }
+
+        function filtrering() {
+            console.log("FILTER");
+            filter = this.dataset.kategori;
+            document.querySelector("h1").textContent = this.textContent;
+            document.querySelectorAll(".filter").forEach(elm => {
+                elm.classList.remove("valgt");
+            })
+            this.classList.add("valgt");
+            start();
+        }
+
+    </script>
+</body>
+
+</html>
